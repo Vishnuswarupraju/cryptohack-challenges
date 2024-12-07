@@ -1,0 +1,48 @@
+#port comms
+from Crypto.Util.number import bytes_to_long, long_to_bytes
+import base64
+import codecs
+import random
+import telnetlib
+import json
+
+HOST = "socket.cryptohack.org"
+PORT = 13377
+
+tn = telnetlib.Telnet(HOST, PORT)
+
+def readline():
+    return tn.read_until(b"\n")
+
+def json_recv():
+    line = readline()
+    return json.loads(line.decode())
+
+def json_send(hsh):
+    request = json.dumps(hsh).encode()
+    tn.write(request)
+    
+for i in range(100):
+    received = json_recv()
+
+    print("Received type: ",received["type"])
+    print("Received encoded value: ",received["encoded"])
+ if received["type"] == "base64":
+        encoded = base64.b64decode(received["encoded"].encode()).decode() # wow so encode
+    elif received["type"] == "hex":
+        encoded = bytearray.fromhex(received["encoded"]).decode()
+    elif received["type"] == "rot13":
+        encoded = codecs.decode(received["encoded"], 'rot_13')
+    elif received["type"] == "bigint":
+        encoded = bytearray.fromhex(received["encoded"][2:]).decode()
+    elif received["type"] == "utf-8":
+        encoded = "".join([chr(b) for b in received["encoded"]])
+    print("value", encoded,i)
+    to_send = {
+        "decoded": encoded
+    }
+    json_send(to_send)
+    
+received = json_recv()
+
+print("Received type: ",received["flag"])
