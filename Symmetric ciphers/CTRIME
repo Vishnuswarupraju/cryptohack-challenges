@@ -1,0 +1,21 @@
+import requests
+import string
+from Crypto.Util.Padding import unpad
+
+def encrypt(plaintext):
+    res = requests.get(f"http://aes.cryptohack.org/ctrime/encrypt/{plaintext.hex()}/")
+    return bytes.fromhex(res.json()['ciphertext'])
+
+flag = b'crypto{'
+inv = ';'
+while True:
+    for i in range(32,127):
+        cipher = encrypt((flag+inv.encode())*2)
+        length = len(cipher)
+        cipher = encrypt((flag+chr(i).encode())*2)
+        if length > len(cipher):
+            flag += chr(i).encode()
+            break
+    print(flag)
+    if chr(flag[-1]) == '}':
+        break
